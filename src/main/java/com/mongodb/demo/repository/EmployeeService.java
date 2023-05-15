@@ -28,6 +28,7 @@ public class EmployeeService {
     }
     
     
+    // Delete employees by date and return the count of deleted documents
     public long deleteEmployeesByDate(LocalDate date) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
@@ -44,7 +45,7 @@ public class EmployeeService {
         return deletedCount;
     }
 
-    
+    // Retrieve employees by date
     public List<Employee> getEmployeesByDate(LocalDate date) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
@@ -56,6 +57,7 @@ public class EmployeeService {
         return mongoTemplate.find(query, Employee.class);
     }
    
+    // Write employees to a JSON file by date
     public boolean writeEmployeesToJsonByDate(LocalDate date, String outputPath) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
@@ -104,6 +106,7 @@ public class EmployeeService {
         }
     }
     
+    // Write employees to a JSON file by date using separate methods
     public boolean writeEmployeesToJsonByDate2(LocalDate date, String outputPath) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
