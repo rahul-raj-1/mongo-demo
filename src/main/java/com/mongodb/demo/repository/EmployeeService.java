@@ -5,18 +5,15 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.util.CloseableIterator;
-import org.springframework.expression.ParseException;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.demo.entity.Employee;
 
 
@@ -30,6 +27,23 @@ public class EmployeeService {
         this.mongoTemplate = mongoTemplate;
     }
     
+    
+    public long deleteEmployeesByDate(LocalDate date) {
+        LocalDateTime startDateTime = date.atStartOfDay();
+        LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
+        
+        Query query = new Query(Criteria.where("created")
+                .gte(startDateTime.toString())
+                .lt(endDateTime.plusNanos(1).toString()));
+        
+        DeleteResult result = mongoTemplate.remove(query, Employee.class);
+        long deletedCount = result.getDeletedCount();
+        
+        System.out.println("deletedCount: " + deletedCount);
+        
+        return deletedCount;
+    }
+
     
     public List<Employee> getEmployeesByDate(LocalDate date) {
         LocalDateTime startDateTime = date.atStartOfDay();
