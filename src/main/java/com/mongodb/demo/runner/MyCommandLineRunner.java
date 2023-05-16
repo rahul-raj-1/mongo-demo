@@ -44,7 +44,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
         String outputPath = outputDirectory + "\\" + fileName;
       
         
-        employeeService.deleteEmployeesByDate(targetDate);
+        employeeService.writeEmployeesToJsonByDate(targetDate,outputPath);
 
         
        

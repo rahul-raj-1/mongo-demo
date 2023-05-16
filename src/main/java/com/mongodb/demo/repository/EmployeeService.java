@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -19,7 +20,9 @@ import com.mongodb.demo.entity.Employee;
 
 @Service
 public class EmployeeService {
-    private static final int PAGE_SIZE = 2; // Specify the batch size
+    
+    @Value("${page.size}")
+    private int pageSize;
 
 	private final MongoTemplate mongoTemplate;
     
@@ -45,19 +48,9 @@ public class EmployeeService {
         return deletedCount;
     }
 
-    // Retrieve employees by date
-    public List<Employee> getEmployeesByDate(LocalDate date) {
-        LocalDateTime startDateTime = date.atStartOfDay();
-        LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
-        
-        Query query = new Query(Criteria.where("created")
-                .gte(startDateTime.toString())
-                .lt(endDateTime.plusNanos(1).toString()));
-        
-        return mongoTemplate.find(query, Employee.class);
-    }
+  
    
-    // Write employees to a JSON file by date
+    // Write employees to a JSON file by date using separate methods
     public boolean writeEmployeesToJsonByDate(LocalDate date, String outputPath) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
@@ -74,56 +67,6 @@ public class EmployeeService {
             int pageNum = 0;
 
             while (processedCount < totalCount) {
-                query.limit(PAGE_SIZE).skip(pageNum * PAGE_SIZE);
-                List<Employee> employees = mongoTemplate.find(query, Employee.class);
-                
-                System.out.println("employees size : " + employees.size());
-
-                for (Employee employee : employees) {
-                    // Write the employee as JSON to the file
-                    String json = new ObjectMapper().writeValueAsString(employee);
-                    writer.write(json + "\n");
-                    writtenCount++;
-                }
-
-                processedCount += employees.size();
-                pageNum++;
-
-                System.out.println("Processed " + processedCount + " employees.");
-            }
-
-            if (writtenCount != totalCount) {
-                System.out.println("Mismatch between fetched and written documents!");
-                return true;
-            } else {
-                System.out.println("All documents fetched and written successfully.");
-                return false;
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
-    // Write employees to a JSON file by date using separate methods
-    public boolean writeEmployeesToJsonByDate2(LocalDate date, String outputPath) {
-        LocalDateTime startDateTime = date.atStartOfDay();
-        LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
-
-        Query query = new Query(Criteria.where("created")
-                .gte(startDateTime.toString())
-                .lt(endDateTime.plusNanos(1).toString()));
-
-        long totalCount = mongoTemplate.count(query, Employee.class);
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
-            int processedCount = 0;
-            int writtenCount = 0;
-            int pageNum = 0;
-
-            while (processedCount < totalCount) {
-                query.limit(PAGE_SIZE).skip(pageNum * PAGE_SIZE);
                 List<Employee> employees = fetchEmployeesByPage(query, pageNum);
 
                 System.out.println("Employees fetched: " + employees.size());
@@ -149,7 +92,7 @@ public class EmployeeService {
     }
 
     private List<Employee> fetchEmployeesByPage(Query query, int pageNum) {
-        query.limit(PAGE_SIZE).skip(pageNum * PAGE_SIZE);
+        query.limit(pageSize).skip(pageNum * pageSize);
         return mongoTemplate.find(query, Employee.class);
     }
 
