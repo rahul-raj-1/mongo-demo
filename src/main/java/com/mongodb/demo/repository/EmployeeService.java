@@ -82,7 +82,7 @@ public class EmployeeService {
                 System.out.println("Mismatch between fetched and written documents!");
                 return false;
             } else {
-                System.out.println("All documents fetched and written successfully.");
+                System.out.println("All documents fetched and written successfully." + writtenCount);
                 return true;
             }
         } catch (IOException e) {

@@ -14,6 +14,8 @@ public class CalculateDate {
 	@Autowired
 	private MongoTemplate mongoTemplate;
 	
+
+	
 	public MaxMinCreatedDate calculateMaxCreatedDate() {
 		Aggregation aggregation = Aggregation.newAggregation(
 	            Aggregation.project("created"),
@@ -27,7 +29,7 @@ public class CalculateDate {
 
 			        MaxMinCreatedDate maxMinCreatedDate = result.getUniqueMappedResult();
 
-			        System.out.println("Result is: " + maxMinCreatedDate);
+			        System.out.println("Result is: " + maxMinCreatedDate.getMinDate());
 			        return maxMinCreatedDate;
 	  
 	}

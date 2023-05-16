@@ -46,6 +46,7 @@ public class MyCommandLineRunner implements CommandLineRunner {
         
         employeeService.writeEmployeesToJsonByDate(targetDate,outputPath);
 
+        calculateDate.calculateMaxCreatedDate();
         
        
 
