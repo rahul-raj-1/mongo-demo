@@ -3,6 +3,7 @@ package com.mongodb.demo.service;
 import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
@@ -10,12 +11,11 @@ import software.amazon.awssdk.transfer.s3.model.FileUpload;
 import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 import software.amazon.awssdk.transfer.s3.progress.LoggingTransferListener;
 
-
-// NEED TO BE TESTED
+@Service //NOT TESTED
 public class S3Uploader {
 
 	@Autowired
-	private S3TransferManager transferManager;
+	private S3TransferManager transferManager; 
 	
 	public String uploadFile( String bucketName, String key, String filePath) {
 		UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
