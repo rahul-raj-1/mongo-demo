@@ -1,4 +1,6 @@
-package com.mongodb.demo.repository;
+package com.mongodb.demo.service;
+
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -7,8 +9,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -16,44 +19,43 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.demo.entity.Employee;
-
 
 @Service
-public class EmployeeService {
-    
+public class GenericService {
+
     @Value("${page.size}")
     private int pageSize;
 
-	private final MongoTemplate mongoTemplate;
-    
-    public EmployeeService(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
-    }
-    
-    
-    // Delete employees by date and return the count of deleted documents
-    public long deleteEmployeesByDate(LocalDate date) {
+    @Autowired
+    private  MongoTemplate mongoTemplate;
+
+   
+
+    // Delete documents by date and return the count of deleted documents
+    public long deleteDocumentsByDate(String collectionName, LocalDate date, String lenderName) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
-        
-        
+
         Query query = new Query(Criteria.where("created")
                 .gte(startDateTime.toString())
                 .lt(endDateTime.plusNanos(1).toString()));
-        
-        DeleteResult result = mongoTemplate.remove(query, Employee.class);
+
+        if (lenderName != null && !lenderName.isEmpty()) {
+            query.addCriteria(Criteria.where("lenderName").is(lenderName));
+        }
+
+        DeleteResult result = mongoTemplate.remove(query, Document.class, collectionName);
         long deletedCount = result.getDeletedCount();
-        
+
         System.out.println("deletedCount: " + deletedCount);
-        
+
         return deletedCount;
     }
 
-  
-   
-    // Write employees to a JSON file by date using separate methods
-    public boolean writeEmployeesToJsonByDate(LocalDate date, String outputPath) {
+    
+
+    // Write documents to a JSON file by date using separate methods
+    public boolean writeDocumentsToJsonByDate(String collectionName, LocalDate date, String outputPath) {
         LocalDateTime startDateTime = date.atStartOfDay();
         LocalDateTime endDateTime = date.atTime(LocalTime.MAX);
 
@@ -61,7 +63,7 @@ public class EmployeeService {
                 .gte(startDateTime.toString())
                 .lt(endDateTime.plusNanos(1).toString()));
 
-        long totalCount = mongoTemplate.count(query, Employee.class);
+        long totalCount = mongoTemplate.count(query, Document.class, collectionName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
             int processedCount = 0;
@@ -69,15 +71,15 @@ public class EmployeeService {
             int pageNum = 0;
 
             while (processedCount < totalCount) {
-                List<Employee> employees = fetchEmployeesByPage(query, pageNum);
+                List<Document> documents = fetchDocumentsByPage(collectionName, query, pageNum);
 
-                System.out.println("Employees fetched: " + employees.size());
+                System.out.println("Documents fetched: " + documents.size());
 
-                writtenCount = writtenCount + writeEmployeesToFile(employees, writer);
-                processedCount =processedCount +  employees.size();
+                writtenCount = writtenCount + writeDocumentsToFile(documents, writer);
+                processedCount = processedCount + documents.size();
                 pageNum++;
 
-                System.out.println("Processed " + processedCount + " employees.");
+                System.out.println("Processed " + processedCount + " documents.");
             }
 
             if (writtenCount != totalCount) {
@@ -93,22 +95,29 @@ public class EmployeeService {
         }
     }
 
-    private List<Employee> fetchEmployeesByPage(Query query, int pageNum) {
+    private List<Document> fetchDocumentsByPage(String collectionName, Query query, int pageNum) {
         query.limit(pageSize).skip(pageNum * pageSize);
-        return mongoTemplate.find(query, Employee.class);
+        return mongoTemplate.find(query, Document.class, collectionName);
+    }
+    
+    private List<Document> fetchDocumentsByPage(String collectionName, String lenderName, Query query, int pageNum) {
+        if (lenderName != null && !lenderName.isEmpty()) {
+            query.addCriteria(Criteria.where("lenderName").is(lenderName));
+        }
+        query.limit(pageSize).skip(pageNum * pageSize);
+        return mongoTemplate.find(query, Document.class, collectionName);
     }
 
-    private int writeEmployeesToFile(List<Employee> employees, BufferedWriter writer) throws IOException {
+
+    private int writeDocumentsToFile(List<Document> documents, BufferedWriter writer) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         int writtenCount = 0;
-        for (Employee employee : employees) {
-            String json = objectMapper.writeValueAsString(employee);
+        for (Document document : documents) {
+            String json = objectMapper.writeValueAsString(document);
             writer.write(json + "\n");
             writtenCount++;
         }
         writer.flush();
         return writtenCount;
     }
-
 }
-
